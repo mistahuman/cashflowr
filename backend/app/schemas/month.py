@@ -7,15 +7,17 @@ class MonthCreate(BaseModel):
     month: int = Field(..., ge=1, le=12)
     income: float = Field(..., ge=0)
     expenses: float = Field(..., ge=0)
-    investments: float = Field(..., ge=0)
-    initial_net_worth: Optional[float] = Field(None)
+    investments: float = Field(default=0.0)
+    portfolio_value: Optional[float] = Field(None, ge=0)
+    notes: Optional[str] = Field(None)
 
 
 class MonthUpdate(BaseModel):
     income: Optional[float] = Field(None, ge=0)
     expenses: Optional[float] = Field(None, ge=0)
-    investments: Optional[float] = Field(None, ge=0)
-    initial_net_worth: Optional[float] = Field(None)
+    investments: Optional[float] = Field(None)
+    portfolio_value: Optional[float] = Field(None, ge=0)
+    notes: Optional[str] = Field(None)
 
 
 class MonthResponse(BaseModel):
@@ -25,14 +27,16 @@ class MonthResponse(BaseModel):
     income: float
     expenses: float
     investments: float
-    initial_net_worth: Optional[float]
+    portfolio_value: Optional[float]       # valore grezzo inserito (None = non impostato questo mese)
+    portfolio_value_effective: float       # valore effettivo usato (carry-forward se None)
+    notes: Optional[str]
     savings: float
-    net_worth: float
+    liquid_balance: float
+    net_worth: float                       # liquid_balance + portfolio_value_effective
     net_worth_delta: float
     savings_rate: Optional[float]
     investment_rate: Optional[float]
     wealth_building_rate: Optional[float]
-    consistency_check: float
     rolling_avg_3m: float
 
 

@@ -2,16 +2,27 @@ from datetime import date
 from fastapi import APIRouter
 
 from app.models.month import MonthEntry
+from app.models.settings import Settings
 from app.schemas.month import AnnualSummaryResponse, TrendsResponse, MonthResponse
 from app.services.calculations import build_responses
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 
 
+async def _initial_net_worth() -> float:
+    doc = await Settings.find_one()
+    return doc.initial_net_worth if doc else 0.0
+
+
+async def _all_responses() -> list[MonthResponse]:
+    entries = await MonthEntry.find_all().to_list()
+    inw = await _initial_net_worth()
+    return build_responses(entries, inw)
+
+
 @router.get("/annual/{year}", response_model=AnnualSummaryResponse)
 async def annual_summary(year: int):
-    entries = await MonthEntry.find_all().to_list()
-    all_responses = build_responses(entries)
+    all_responses = await _all_responses()
     year_months = [r for r in all_responses if r.year == year]
 
     total_income = sum(r.income for r in year_months)
@@ -43,10 +54,8 @@ async def annual_summary(year: int):
 @router.get("/trends", response_model=TrendsResponse)
 async def trends():
     today = date.today()
-    entries = await MonthEntry.find_all().to_list()
-    all_responses = build_responses(entries)
+    all_responses = await _all_responses()
 
-    # Collect the last 12 calendar months (year, month tuples)
     months_needed: list[tuple[int, int]] = []
     y, m = today.year, today.month
     for _ in range(12):

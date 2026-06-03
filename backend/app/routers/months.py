@@ -2,15 +2,22 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
 
 from app.models.month import MonthEntry
+from app.models.settings import Settings
 from app.schemas.month import MonthCreate, MonthUpdate, MonthResponse
 from app.services.calculations import build_responses
 
 router = APIRouter(prefix="/months", tags=["months"])
 
 
+async def _initial_net_worth() -> float:
+    doc = await Settings.find_one()
+    return doc.initial_net_worth if doc else 0.0
+
+
 async def _all_responses() -> list[MonthResponse]:
     entries = await MonthEntry.find_all().to_list()
-    return build_responses(entries)
+    inw = await _initial_net_worth()
+    return build_responses(entries, inw)
 
 
 def _find_response(

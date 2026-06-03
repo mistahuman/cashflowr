@@ -7,14 +7,16 @@ export interface MonthEntry {
 	income: number;
 	expenses: number;
 	investments: number;
-	initial_net_worth: number | null;
+	portfolio_value: number | null;
+	portfolio_value_effective: number;
+	notes: string | null;
 	savings: number;
+	liquid_balance: number;
 	net_worth: number;
 	net_worth_delta: number;
 	savings_rate: number | null;
 	investment_rate: number | null;
 	wealth_building_rate: number | null;
-	consistency_check: number;
 	rolling_avg_3m: number;
 }
 
@@ -23,15 +25,17 @@ export interface MonthCreate {
 	month: number;
 	income: number;
 	expenses: number;
-	investments: number;
-	initial_net_worth?: number | null;
+	investments?: number;
+	portfolio_value?: number | null;
+	notes?: string | null;
 }
 
 export interface MonthUpdate {
 	income?: number;
 	expenses?: number;
 	investments?: number;
-	initial_net_worth?: number | null;
+	portfolio_value?: number | null;
+	notes?: string | null;
 }
 
 export interface AnnualSummary {
@@ -47,6 +51,10 @@ export interface AnnualSummary {
 
 export interface TrendsResponse {
 	months: MonthEntry[];
+}
+
+export interface Settings {
+	initial_net_worth: number;
 }
 
 type FetchFn = typeof fetch;
@@ -86,5 +94,14 @@ export function createSummaryApi(fetchFn?: FetchFn) {
 	};
 }
 
+export function createSettingsApi(fetchFn?: FetchFn) {
+	return {
+		get: () => request<Settings>('/settings/', undefined, fetchFn),
+		update: (payload: Settings) =>
+			request<Settings>('/settings/', { method: 'PUT', body: JSON.stringify(payload) }, fetchFn)
+	};
+}
+
 export const monthsApi = createMonthsApi();
 export const summaryApi = createSummaryApi();
+export const settingsApi = createSettingsApi();

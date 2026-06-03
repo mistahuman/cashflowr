@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import EntryForm from '$lib/components/cashflowr/EntryForm.svelte';
 	import { monthsApi } from '$lib/api/client';
@@ -21,6 +21,7 @@
 	async function handleSubmit(payload: MonthUpdate) {
 		await monthsApi.update(entry.year, entry.month, payload as MonthUpdate);
 		uiStore.toast('Month updated!', 'success');
+		await invalidateAll();
 		goto(resolve('/dashboard'));
 	}
 </script>

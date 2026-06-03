@@ -16,9 +16,9 @@
 	const data = $derived(months.map((m) => m.net_worth));
 
 	onMount(async () => {
-		const { Chart, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler } =
+		const { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler } =
 			await import('chart.js');
-		Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
+		Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
 
 		chart = new Chart(canvas, {
 			type: 'line',

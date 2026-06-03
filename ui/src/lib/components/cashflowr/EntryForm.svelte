@@ -9,7 +9,8 @@
 			income: number;
 			expenses: number;
 			investments: number;
-			initial_net_worth?: number | null;
+			portfolio_value?: number | null;
+			notes?: string | null;
 		};
 		isEdit?: boolean;
 		onSubmit: (data: MonthCreate | MonthUpdate) => Promise<void>;
@@ -23,8 +24,9 @@
 	let month = $state(initial?.month ?? now.getMonth() + 1);
 	let income = $state<string>(initial?.income?.toString() ?? '');
 	let expenses = $state<string>(initial?.expenses?.toString() ?? '');
-	let investments = $state<string>(initial?.investments?.toString() ?? '');
-	let initialNetWorth = $state<string>(initial?.initial_net_worth?.toString() ?? '');
+	let investments = $state<string>(initial?.investments !== 0 ? (initial?.investments?.toString() ?? '') : '');
+	let portfolioValue = $state<string>(initial?.portfolio_value?.toString() ?? '');
+	let notes = $state<string>(initial?.notes ?? '');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -34,7 +36,7 @@
 
 	const savings = $derived(incomeVal - expensesVal - investmentsVal);
 	const wealthBuildingRate = $derived(
-		incomeVal > 0 ? ((savings + investmentsVal) / incomeVal) * 100 : null
+		incomeVal > 0 ? ((incomeVal - expensesVal) / incomeVal) * 100 : null
 	);
 
 	const savingsHighlight = $derived(savings < 0 ? 'text-error-600' : 'text-success-600');
@@ -43,7 +45,7 @@
 		if (parseFloat(income) < 0) return 'Income cannot be negative.';
 		if (income !== '' && isNaN(parseFloat(income))) return 'Invalid income value.';
 		if (parseFloat(expenses) < 0) return 'Expenses cannot be negative.';
-		if (parseFloat(investments) < 0) return 'Investments cannot be negative.';
+		if (portfolioValue !== '' && parseFloat(portfolioValue) < 0) return 'Portfolio value cannot be negative.';
 		return null;
 	}
 
@@ -54,12 +56,14 @@
 		error = null;
 		loading = true;
 		try {
+			const portfolioVal = portfolioValue !== '' ? parseFloat(portfolioValue) : null;
 			const payload: MonthCreate | MonthUpdate = isEdit
 				? {
 						income: parseFloat(income),
 						expenses: parseFloat(expenses),
-						investments: parseFloat(investments),
-						initial_net_worth: initialNetWorth !== '' ? parseFloat(initialNetWorth) : null
+						investments: parseFloat(investments) || 0,
+						portfolio_value: portfolioVal,
+						notes: notes.trim() || null
 					}
 				: {
 						year,
@@ -67,7 +71,8 @@
 						income: parseFloat(income) || 0,
 						expenses: parseFloat(expenses) || 0,
 						investments: parseFloat(investments) || 0,
-						initial_net_worth: initialNetWorth !== '' ? parseFloat(initialNetWorth) : null
+						portfolio_value: portfolioVal,
+						notes: notes.trim() || null
 					};
 			await onSubmit(payload);
 		} catch (e: unknown) {
@@ -83,14 +88,7 @@
 		<div class="grid grid-cols-2 gap-4">
 			<label class="label">
 				<span class="label-text">Year</span>
-				<input
-					type="number"
-					class="input"
-					bind:value={year}
-					min="2000"
-					max="2100"
-					required
-				/>
+				<input type="number" class="input" bind:value={year} min="2000" max="2100" required />
 			</label>
 			<label class="label">
 				<span class="label-text">Month</span>
@@ -105,54 +103,34 @@
 
 	<label class="label">
 		<span class="label-text">Income (€)</span>
-		<input
-			type="number"
-			class="input"
-			bind:value={income}
-			min="0"
-			step="0.01"
-			placeholder="0.00"
-		/>
+		<input type="number" class="input" bind:value={income} min="0" step="0.01" placeholder="0.00" />
 	</label>
 
 	<label class="label">
 		<span class="label-text">Expenses (€)</span>
-		<input
-			type="number"
-			class="input"
-			bind:value={expenses}
-			min="0"
-			step="0.01"
-			placeholder="0.00"
-			required
-		/>
+		<input type="number" class="input" bind:value={expenses} min="0" step="0.01" placeholder="0.00" required />
 	</label>
 
 	<label class="label">
-		<span class="label-text">Investments (€)</span>
-		<input
-			type="number"
-			class="input"
-			bind:value={investments}
-			min="0"
-			step="0.01"
-			placeholder="0.00"
-			required
-		/>
+		<span class="label-text">
+			Investments (€)
+			<span class="text-surface-400 text-xs">— optional · negativo = vendita/proventi</span>
+		</span>
+		<input type="number" class="input" bind:value={investments} step="0.01" placeholder="0.00" />
 	</label>
 
-	{#if !isEdit}
-		<label class="label">
-			<span class="label-text">Initial net worth (€) <span class="text-surface-400 text-xs">— first month only</span></span>
-			<input
-				type="number"
-				class="input"
-				bind:value={initialNetWorth}
-				step="0.01"
-				placeholder="Leave blank unless this is your first entry"
-			/>
-		</label>
-	{/if}
+	<label class="label">
+		<span class="label-text">
+			Portfolio value (€)
+			<span class="text-surface-400 text-xs">— valore attuale del portafoglio a fine mese</span>
+		</span>
+		<input type="number" class="input" bind:value={portfolioValue} min="0" step="0.01" placeholder="Lascia vuoto se invariato" />
+	</label>
+
+	<label class="label">
+		<span class="label-text">Notes <span class="text-surface-400 text-xs">— optional</span></span>
+		<textarea class="textarea" bind:value={notes} rows="2" placeholder="Anything worth remembering about this month…"></textarea>
+	</label>
 
 	<!-- Live preview -->
 	<div class="card preset-tonal p-4 space-y-2">

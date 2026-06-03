@@ -57,11 +57,7 @@
 						>
 							{m.net_worth_delta >= 0 ? '+' : ''}{formatEur(m.net_worth_delta)}
 						</td>
-						<td class="py-2 px-3">
-							{#if m.consistency_check !== 0}
-								<AlertTriangle size={14} class="text-warning-500" />
-							{/if}
-						</td>
+						<td class="py-2 px-3"></td>
 					</tr>
 				{/each}
 			</tbody>

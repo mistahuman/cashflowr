@@ -11,7 +11,8 @@
 		{ href: resolve('/dashboard'), label: 'dashboard', target: '_self' },
 		{ href: resolve('/entry'), label: 'add month', target: '_self' },
 		{ href: resolve('/history'), label: 'history', target: '_self' },
-		{ href: resolve('/annual'), label: 'annual', target: '_self' }
+		{ href: resolve('/annual'), label: 'annual', target: '_self' },
+		{ href: resolve('/settings'), label: 'settings', target: '_self' }
 	];
 </script>
 

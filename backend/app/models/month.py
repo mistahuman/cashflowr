@@ -9,8 +9,9 @@ class MonthEntry(Document):
     month: int = Field(..., ge=1, le=12)
     income: float = Field(..., ge=0)
     expenses: float = Field(..., ge=0)
-    investments: float = Field(..., ge=0)
-    initial_net_worth: Optional[float] = Field(None)
+    investments: float = Field(default=0.0)
+    portfolio_value: Optional[float] = Field(None)
+    notes: Optional[str] = Field(None)
 
     class Settings:
         name = "months"

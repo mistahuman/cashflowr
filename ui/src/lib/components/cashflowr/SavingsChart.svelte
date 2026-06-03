@@ -23,22 +23,30 @@
 				labels: months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`),
 				datasets: [
 					{
-						label: 'Income',
-						data: months.map((m) => m.income),
-						backgroundColor: 'oklch(88.68% 0.2 140.7deg / 0.7)'
+						label: 'Savings',
+						data: months.map((m) => m.savings),
+						backgroundColor: months.map((m) =>
+							m.savings >= 0
+								? 'oklch(88.68% 0.2 140.7deg / 0.8)'
+								: 'oklch(64.84% 0.24 33.01deg / 0.8)'
+						)
 					},
 					{
-						label: 'Expenses',
-						data: months.map((m) => m.expenses),
-						backgroundColor: 'oklch(64.84% 0.24 33.01deg / 0.7)'
+						label: 'Investments',
+						data: months.map((m) => m.investments),
+						backgroundColor: 'oklch(48.65% 0.3 279.02deg / 0.7)'
 					}
 				]
 			},
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
-				plugins: { tooltip: { mode: 'index', intersect: false } },
+				plugins: {
+					tooltip: { mode: 'index', intersect: false },
+					legend: { position: 'bottom' }
+				},
 				scales: {
+					x: { stacked: false },
 					y: {
 						ticks: {
 							callback: (v) =>
@@ -59,8 +67,14 @@
 	$effect(() => {
 		if (!chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
-		chart.data.datasets[0].data = months.map((m) => m.income);
-		chart.data.datasets[1].data = months.map((m) => m.expenses);
+		chart.data.datasets[0].data = months.map((m) => m.savings);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(chart.data.datasets[0] as any).backgroundColor = months.map((m) =>
+			m.savings >= 0
+				? 'oklch(88.68% 0.2 140.7deg / 0.8)'
+				: 'oklch(64.84% 0.24 33.01deg / 0.8)'
+		);
+		chart.data.datasets[1].data = months.map((m) => m.investments);
 		chart.update();
 	});
 </script>
