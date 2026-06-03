@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="mistahuman-theme">
+	<head>
+		<meta charset="utf-8" />
+		<script>
+			(function () {
+				try {
+					const storedMode = localStorage.getItem('mode');
+					const preferredMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+						? 'dark'
+						: 'light';
+					const mode = storedMode ?? preferredMode ?? 'dark';
+					document.documentElement.setAttribute('data-mode', mode);
+					const storedTheme = localStorage.getItem('theme');
+					if (storedTheme) document.documentElement.setAttribute('data-theme', storedTheme);
+				} catch (e) {
+					document.documentElement.setAttribute('data-mode', 'dark');
+				}
+			})();
+		</script>
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>sveltekit-skeleton-starter</title>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
