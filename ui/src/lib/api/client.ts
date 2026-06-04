@@ -55,6 +55,9 @@ export interface TrendsResponse {
 
 export interface Settings {
 	initial_net_worth: number;
+	life_target: number;
+	investment_target: number;
+	tax_rate: number;
 }
 
 type FetchFn = typeof fetch;

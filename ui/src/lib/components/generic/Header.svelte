@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { Settings } from 'lucide-svelte';
 	import GitHubIcon from '$lib/components/icons/GitHubIcon.svelte';
 	import Drawer from './Drawer.svelte';
 	import Lightswitch from './Lightswitch.svelte';
@@ -9,11 +10,13 @@
 	let titleDrawer = 'menu';
 	const coreLinks = [
 		{ href: resolve('/dashboard'), label: 'dashboard', target: '_self' },
-		{ href: resolve('/entry'), label: 'add month', target: '_self' },
 		{ href: resolve('/history'), label: 'history', target: '_self' },
 		{ href: resolve('/annual'), label: 'annual', target: '_self' },
+		{ href: resolve('/planner'), label: 'planner', target: '_self' },
 		{ href: resolve('/settings'), label: 'settings', target: '_self' }
 	];
+
+	const navLinks = coreLinks.filter((l) => l.href !== resolve('/settings'));
 </script>
 
 <header
@@ -27,12 +30,12 @@
 			<!-- Mobile Nav Drawer -->
 			<Drawer title={titleDrawer} navigation={coreLinks} />
 			<!-- Logo -->
-			<a class="hidden xl:inline-block" href={resolve('/')} title="SvelteKit Skeleton Starter">
+			<a class="hidden xl:inline-block" href={resolve('/')} title="cashflowr">
 				<Logo width="32" height="32" />
 			</a>
 			<div class="hidden items-center xl:flex">
 				<!-- Navigation -->
-				{#each coreLinks as link (link.href)}
+				{#each navLinks as link (link.href)}
 					<a class="btn hover:preset-tonal" href={link.href} target={link.target}>
 						{link.label}
 					</a>
@@ -43,6 +46,10 @@
 		<div class="flex items-center gap-2"></div>
 		<!-- Right -->
 		<div class="flex items-stretch justify-end gap-2">
+			<!-- Settings -->
+			<a class="btn-icon hover:preset-tonal hidden xl:inline-flex" href={resolve('/settings')} title="settings">
+				<Settings size={20} />
+			</a>
 			<!-- Mode and Theme -->
 			<Lightswitch />
 			<ThemeSwitch />

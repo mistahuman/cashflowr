@@ -18,6 +18,16 @@ export function slugify(str: string): string {
 		.replace(/[^\w-]/g, '');
 }
 
+export function formatDeltaEur(delta: number): string {
+	const sign = delta >= 0 ? '+' : '';
+	return sign + new Intl.NumberFormat('de-DE', {
+		style: 'currency',
+		currency: 'EUR',
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0
+	}).format(delta);
+}
+
 export function formatEur(n: number): string {
 	return new Intl.NumberFormat('de-DE', {
 		style: 'currency',

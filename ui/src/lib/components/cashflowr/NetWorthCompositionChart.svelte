@@ -3,13 +3,8 @@
 	import type { MonthEntry } from '$lib/api/client';
 	import { monthName } from '$lib/utils/format';
 
-	interface Props {
-		months: MonthEntry[];
-		yMin?: number;
-		yMax?: number;
-	}
-
-	let { months, yMin, yMax }: Props = $props();
+	interface Props { months: MonthEntry[] }
+	let { months }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let chart: import('chart.js').Chart | null = null;
@@ -20,37 +15,34 @@
 	}).format(v);
 
 	onMount(async () => {
-		const { Chart, BarController, BarElement, LineController, LineElement, PointElement,
-			LinearScale, CategoryScale, Tooltip, Legend } = await import('chart.js');
-		Chart.register(BarController, BarElement, LineController, LineElement, PointElement,
-			LinearScale, CategoryScale, Tooltip, Legend);
+		const { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler } =
+			await import('chart.js');
+		Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler);
 
 		chart = new Chart(canvas, {
-			type: 'bar',
+			type: 'line',
 			data: {
 				labels: months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`),
 				datasets: [
 					{
-						label: 'Income',
-						data: months.map((m) => m.income),
-						backgroundColor: 'oklch(88.68% 0.2 140.7deg / 0.7)'
-					},
-					{
-						label: 'Expenses',
-						data: months.map((m) => m.expenses),
-						backgroundColor: 'oklch(64.84% 0.24 33.01deg / 0.7)'
-					},
-					{
-						type: 'line' as const,
-						label: '3m avg income',
-						data: months.map((m) => m.rolling_avg_3m),
-						borderColor: 'oklch(48.65% 0.3 279.02deg)',
-						backgroundColor: 'transparent',
-						borderDash: [4, 3],
+						label: 'Liquid',
+						data: months.map((m) => m.liquid_balance),
+						fill: 'origin',
 						tension: 0.3,
-						pointRadius: 0,
-						pointHoverRadius: 4,
-						borderWidth: 2
+						borderColor: 'oklch(48.65% 0.3 279.02deg)',
+						backgroundColor: 'oklch(48.65% 0.3 279.02deg / 0.35)',
+						pointRadius: 3,
+						pointHoverRadius: 5
+					},
+					{
+						label: 'Net worth (liquid + portfolio)',
+						data: months.map((m) => m.net_worth),
+						fill: '-1',   // fills between this line and the liquid line
+						tension: 0.3,
+						borderColor: 'oklch(88.68% 0.2 140.7deg)',
+						backgroundColor: 'oklch(88.68% 0.2 140.7deg / 0.4)',
+						pointRadius: 3,
+						pointHoverRadius: 5
 					}
 				]
 			},
@@ -66,8 +58,6 @@
 				},
 				scales: {
 					y: {
-						min: yMin,
-						max: yMax,
 						ticks: { callback: (v) => eur(v as number) }
 					}
 				}
@@ -81,13 +71,8 @@
 	$effect(() => {
 		if (!chartReady || !chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
-		chart.data.datasets[0].data = months.map((m) => m.income);
-		chart.data.datasets[1].data = months.map((m) => m.expenses);
-		chart.data.datasets[2].data = months.map((m) => m.rolling_avg_3m);
-		if (chart.options.scales?.y) {
-			chart.options.scales.y.min = yMin;
-			chart.options.scales.y.max = yMax;
-		}
+		chart.data.datasets[0].data = months.map((m) => m.liquid_balance);
+		chart.data.datasets[1].data = months.map((m) => m.net_worth);
 		chart.update();
 	});
 </script>
