@@ -11,6 +11,10 @@
 
 	let canvas: HTMLCanvasElement;
 	let chart: import('chart.js').Chart | null = null;
+	let chartReady = $state(false);
+
+	const positiveColor = 'oklch(88.68% 0.2 140.7deg / 0.8)';
+	const negativeColor = 'oklch(64.84% 0.24 33.01deg / 0.8)';
 
 	onMount(async () => {
 		const { Chart, BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend } =
@@ -25,11 +29,7 @@
 					{
 						label: 'Savings',
 						data: months.map((m) => m.savings),
-						backgroundColor: months.map((m) =>
-							m.savings >= 0
-								? 'oklch(88.68% 0.2 140.7deg / 0.8)'
-								: 'oklch(64.84% 0.24 33.01deg / 0.8)'
-						)
+						backgroundColor: months.map((m) => m.savings >= 0 ? positiveColor : negativeColor)
 					},
 					{
 						label: 'Investments',
@@ -41,12 +41,8 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
-				plugins: {
-					tooltip: { mode: 'index', intersect: false },
-					legend: { position: 'bottom' }
-				},
+				plugins: { tooltip: { mode: 'index', intersect: false }, legend: { position: 'bottom' } },
 				scales: {
-					x: { stacked: false },
 					y: {
 						ticks: {
 							callback: (v) =>
@@ -60,19 +56,18 @@
 				}
 			}
 		});
+		chartReady = true;
 	});
 
 	onDestroy(() => chart?.destroy());
 
 	$effect(() => {
-		if (!chart) return;
+		if (!chartReady || !chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
 		chart.data.datasets[0].data = months.map((m) => m.savings);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(chart.data.datasets[0] as any).backgroundColor = months.map((m) =>
-			m.savings >= 0
-				? 'oklch(88.68% 0.2 140.7deg / 0.8)'
-				: 'oklch(64.84% 0.24 33.01deg / 0.8)'
+			m.savings >= 0 ? positiveColor : negativeColor
 		);
 		chart.data.datasets[1].data = months.map((m) => m.investments);
 		chart.update();

@@ -11,10 +11,27 @@
 	let { data }: { data: PageData } = $props();
 
 	const current = $derived(data.months[0] ?? null);
-	const last6 = $derived(data.trends.slice(-6));
-	const last12 = $derived(data.trends.slice(-12));
+	// data.months is most-recent-first; charts need chronological order
+	const allChron = $derived([...data.months].reverse());
 
 	const hasPortfolio = $derived(current ? current.portfolio_value_effective > 0 : false);
+
+	// Global bounds across entire history
+	const nwMin = $derived(
+		allChron.length > 0
+			? Math.floor(Math.min(...allChron.map((m) => m.net_worth)) * 0.97)
+			: 0
+	);
+	const nwMax = $derived(
+		allChron.length > 0
+			? Math.ceil(Math.max(...allChron.map((m) => m.net_worth)) * 1.03)
+			: undefined
+	);
+	const ieMax = $derived(
+		allChron.length > 0
+			? Math.ceil(Math.max(...allChron.map((m) => Math.max(m.income, m.expenses))) * 1.1)
+			: undefined
+	);
 </script>
 
 <div class="container mx-auto max-w-screen-xl px-4 py-8 space-y-8">
@@ -41,16 +58,8 @@
 
 			{#if hasPortfolio}
 				<div class="grid grid-cols-2 gap-4">
-					<KpiCard
-						label="Liquidità"
-						value={formatEur(current.liquid_balance)}
-						sub="Conto corrente"
-					/>
-					<KpiCard
-						label="Portafoglio"
-						value={formatEur(current.portfolio_value_effective)}
-						sub="Valore attuale investimenti"
-					/>
+					<KpiCard label="Liquid cash" value={formatEur(current.liquid_balance)} sub="Cash savings" />
+					<KpiCard label="Portfolio" value={formatEur(current.portfolio_value_effective)} sub="Investment portfolio value" />
 				</div>
 			{/if}
 
@@ -77,46 +86,40 @@
 		</div>
 	{/if}
 
-	{#if last12.length > 0}
+	{#if allChron.length > 0}
 		<section class="space-y-3">
 			<h2 class="text-xs font-semibold uppercase tracking-widest text-surface-500">
-				Net worth — last 12 months
+				Net worth — all time
 			</h2>
 			<div class="card p-4">
-				<NetWorthChart months={last12} />
+				<NetWorthChart months={allChron} yMin={nwMin} yMax={nwMax} />
 			</div>
 		</section>
-	{/if}
 
-	{#if last6.length > 0}
 		<section class="space-y-3">
 			<h2 class="text-xs font-semibold uppercase tracking-widest text-surface-500">
-				Income vs expenses — last 6 months
+				Income vs expenses — all time
 			</h2>
 			<div class="card p-4">
-				<IncomeExpensesChart months={last6} />
+				<IncomeExpensesChart months={allChron} yMin={0} yMax={ieMax} />
 			</div>
 		</section>
-	{/if}
 
-	{#if last6.length > 0}
 		<section class="space-y-3">
 			<h2 class="text-xs font-semibold uppercase tracking-widest text-surface-500">
-				Savings & investments — last 6 months
+				Savings & investments — all time
 			</h2>
 			<div class="card p-4">
-				<SavingsChart months={last6} />
+				<SavingsChart months={allChron} />
 			</div>
 		</section>
-	{/if}
 
-	{#if last12.length > 0}
 		<section class="space-y-3">
 			<h2 class="text-xs font-semibold uppercase tracking-widest text-surface-500">
-				Savings rate — last 12 months
+				Savings rate — all time
 			</h2>
 			<div class="card p-4">
-				<SavingsRateChart months={last12} />
+				<SavingsRateChart months={allChron} />
 			</div>
 		</section>
 	{/if}

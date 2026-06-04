@@ -5,15 +5,15 @@
 
 	interface Props {
 		months: MonthEntry[];
+		yMin?: number;
+		yMax?: number;
 	}
 
-	let { months }: Props = $props();
+	let { months, yMin, yMax }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let chart: import('chart.js').Chart | null = null;
-
-	const labels = $derived(months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`));
-	const data = $derived(months.map((m) => m.net_worth));
+	let chartReady = $state(false);
 
 	onMount(async () => {
 		const { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler } =
@@ -23,11 +23,11 @@
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
-				labels,
+				labels: months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`),
 				datasets: [
 					{
 						label: 'Net Worth',
-						data,
+						data: months.map((m) => m.net_worth),
 						fill: true,
 						tension: 0.3,
 						borderColor: 'oklch(48.65% 0.3 279.02deg)',
@@ -43,6 +43,8 @@
 				plugins: { tooltip: { mode: 'index', intersect: false } },
 				scales: {
 					y: {
+						min: yMin,
+						max: yMax,
 						ticks: {
 							callback: (v) =>
 								new Intl.NumberFormat('de-DE', {
@@ -55,14 +57,19 @@
 				}
 			}
 		});
+		chartReady = true;
 	});
 
 	onDestroy(() => chart?.destroy());
 
 	$effect(() => {
-		if (!chart) return;
+		if (!chartReady || !chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
 		chart.data.datasets[0].data = months.map((m) => m.net_worth);
+		if (chart.options.scales?.y) {
+			chart.options.scales.y.min = yMin;
+			chart.options.scales.y.max = yMax;
+		}
 		chart.update();
 	});
 </script>

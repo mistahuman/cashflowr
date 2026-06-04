@@ -5,12 +5,15 @@
 
 	interface Props {
 		months: MonthEntry[];
+		yMin?: number;
+		yMax?: number;
 	}
 
-	let { months }: Props = $props();
+	let { months, yMin, yMax }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let chart: import('chart.js').Chart | null = null;
+	let chartReady = $state(false);
 
 	onMount(async () => {
 		const { Chart, BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend } =
@@ -37,9 +40,11 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
-				plugins: { tooltip: { mode: 'index', intersect: false } },
+				plugins: { tooltip: { mode: 'index', intersect: false }, legend: { position: 'bottom' } },
 				scales: {
 					y: {
+						min: yMin,
+						max: yMax,
 						ticks: {
 							callback: (v) =>
 								new Intl.NumberFormat('de-DE', {
@@ -52,15 +57,20 @@
 				}
 			}
 		});
+		chartReady = true;
 	});
 
 	onDestroy(() => chart?.destroy());
 
 	$effect(() => {
-		if (!chart) return;
+		if (!chartReady || !chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
 		chart.data.datasets[0].data = months.map((m) => m.income);
 		chart.data.datasets[1].data = months.map((m) => m.expenses);
+		if (chart.options.scales?.y) {
+			chart.options.scales.y.min = yMin;
+			chart.options.scales.y.max = yMax;
+		}
 		chart.update();
 	});
 </script>

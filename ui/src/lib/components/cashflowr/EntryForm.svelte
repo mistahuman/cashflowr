@@ -113,18 +113,18 @@
 
 	<label class="label">
 		<span class="label-text">
-			Investments (€)
-			<span class="text-surface-400 text-xs">— optional · negativo = vendita/proventi</span>
+			Cash moved to/from investments (€)
+			<span class="text-surface-400 text-xs">— positive = bought, negative = sold/received</span>
 		</span>
 		<input type="number" class="input" bind:value={investments} step="0.01" placeholder="0.00" />
 	</label>
 
 	<label class="label">
 		<span class="label-text">
-			Portfolio value (€)
-			<span class="text-surface-400 text-xs">— valore attuale del portafoglio a fine mese</span>
+			Portfolio market value (€)
+			<span class="text-surface-400 text-xs">— total current value of your investment portfolio</span>
 		</span>
-		<input type="number" class="input" bind:value={portfolioValue} min="0" step="0.01" placeholder="Lascia vuoto se invariato" />
+		<input type="number" class="input" bind:value={portfolioValue} min="0" step="0.01" placeholder="Leave blank if unchanged from last month" />
 	</label>
 
 	<label class="label">

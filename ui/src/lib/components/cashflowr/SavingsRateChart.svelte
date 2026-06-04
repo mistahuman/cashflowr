@@ -11,10 +11,7 @@
 
 	let canvas: HTMLCanvasElement;
 	let chart: import('chart.js').Chart | null = null;
-
-	const labels = $derived(months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`));
-	const savingsRates = $derived(months.map((m) => m.savings_rate ?? null));
-	const wealthRates = $derived(months.map((m) => m.wealth_building_rate ?? null));
+	let chartReady = $state(false);
 
 	onMount(async () => {
 		const { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend, Filler } =
@@ -24,11 +21,11 @@
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
-				labels,
+				labels: months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`),
 				datasets: [
 					{
 						label: 'Savings rate',
-						data: savingsRates,
+						data: months.map((m) => m.savings_rate ?? null),
 						tension: 0.3,
 						borderColor: 'oklch(88.68% 0.2 140.7deg)',
 						backgroundColor: 'oklch(88.68% 0.2 140.7deg / 0.1)',
@@ -39,7 +36,7 @@
 					},
 					{
 						label: 'Wealth-building rate',
-						data: wealthRates,
+						data: months.map((m) => m.wealth_building_rate ?? null),
 						tension: 0.3,
 						borderColor: 'oklch(48.65% 0.3 279.02deg)',
 						backgroundColor: 'transparent',
@@ -65,19 +62,16 @@
 					},
 					legend: { position: 'bottom' }
 				},
-				scales: {
-					y: {
-						ticks: { callback: (v) => `${v}%` }
-					}
-				}
+				scales: { y: { ticks: { callback: (v) => `${v}%` } } }
 			}
 		});
+		chartReady = true;
 	});
 
 	onDestroy(() => chart?.destroy());
 
 	$effect(() => {
-		if (!chart) return;
+		if (!chartReady || !chart) return;
 		chart.data.labels = months.map((m) => `${monthName(m.month).slice(0, 3)} ${m.year}`);
 		chart.data.datasets[0].data = months.map((m) => m.savings_rate ?? null);
 		chart.data.datasets[1].data = months.map((m) => m.wealth_building_rate ?? null);
