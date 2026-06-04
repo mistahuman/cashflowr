@@ -53,6 +53,14 @@ export interface TrendsResponse {
 	months: MonthEntry[];
 }
 
+export interface ImportResult {
+	imported: number;
+	updated: number;
+	skipped: number;
+	errors: string[];
+	derived_initial_net_worth: number | null;
+}
+
 export interface Settings {
 	initial_net_worth: number;
 	life_target: number;
@@ -72,6 +80,12 @@ async function request<T>(path: string, init?: RequestInit, fetchFn: FetchFn = f
 	return res.json();
 }
 
+async function upload<T>(path: string, body: FormData, fetchFn: FetchFn = fetch): Promise<T> {
+	const res = await fetchFn(`${BASE_URL}${path}`, { method: 'POST', body });
+	if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+	return res.json();
+}
+
 export function createMonthsApi(fetchFn?: FetchFn) {
 	return {
 		list: () => request<MonthEntry[]>('/months/', undefined, fetchFn),
@@ -85,7 +99,12 @@ export function createMonthsApi(fetchFn?: FetchFn) {
 				body: JSON.stringify(payload)
 			}, fetchFn),
 		delete: (year: number, month: number) =>
-			request<void>(`/months/${year}/${month}`, { method: 'DELETE' }, fetchFn)
+			request<void>(`/months/${year}/${month}`, { method: 'DELETE' }, fetchFn),
+		importCsv: (file: File, onConflict: 'upsert' | 'skip' = 'upsert') => {
+			const form = new FormData();
+			form.append('file', file);
+			return upload<ImportResult>(`/months/import/csv?on_conflict=${onConflict}`, form, fetchFn);
+		}
 	};
 }
 

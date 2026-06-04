@@ -53,3 +53,11 @@ class AnnualSummaryResponse(BaseModel):
 
 class TrendsResponse(BaseModel):
     months: list[MonthResponse]
+
+
+class ImportResult(BaseModel):
+    imported: int
+    updated: int
+    skipped: int
+    errors: list[str]
+    derived_initial_net_worth: Optional[float] = None

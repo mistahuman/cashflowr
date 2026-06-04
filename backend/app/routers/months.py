@@ -1,10 +1,21 @@
-from fastapi import APIRouter, HTTPException, status
+import csv
+import io
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, status
 from fastapi.responses import Response
 
 from app.models.month import MonthEntry
 from app.models.settings import Settings
-from app.schemas.month import MonthCreate, MonthUpdate, MonthResponse
+from app.schemas.month import MonthCreate, MonthUpdate, MonthResponse, ImportResult
 from app.services.calculations import build_responses
+
+_MONTH_NAMES = {
+    'january': 1, 'february': 2, 'march': 3, 'april': 4,
+    'may': 5, 'june': 6, 'july': 7, 'august': 8,
+    'september': 9, 'october': 10, 'november': 11, 'december': 12,
+    'gennaio': 1, 'febbraio': 2, 'marzo': 3, 'aprile': 4,
+    'maggio': 5, 'giugno': 6, 'luglio': 7, 'agosto': 8,
+    'settembre': 9, 'ottobre': 10, 'novembre': 11, 'dicembre': 12,
+}
 
 router = APIRouter(prefix="/months", tags=["months"])
 
@@ -85,3 +96,83 @@ async def delete_month(year: int, month: int):
         raise HTTPException(status_code=404, detail=f"{year}-{month:02d} not found")
     await entry.delete()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/import/csv", response_model=ImportResult)
+async def import_csv(
+    file: UploadFile = File(...),
+    on_conflict: str = Query("upsert", pattern="^(upsert|skip)$"),
+):
+    content = await file.read()
+    text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    imported = updated = skipped = 0
+    errors: list[str] = []
+    # (year*100+month, net_worth, net_worth_delta) for deriving initial net worth
+    earliest: tuple[int, float, float] | None = None
+
+    for i, row in enumerate(reader, start=2):
+        try:
+            row = {k.strip().lower().replace(" ", "_"): v.strip() for k, v in row.items() if k}
+
+            year = int(row["year"])
+
+            month_raw = row["month"]
+            try:
+                month = int(month_raw)
+            except ValueError:
+                month = _MONTH_NAMES.get(month_raw.lower())
+                if not month:
+                    raise ValueError(f"unrecognized month value: {month_raw!r}")
+
+            income = float(row["income"])
+            expenses = float(row["expenses"])
+            investments = float(row.get("investments") or 0)
+            pv_raw = row.get("portfolio_value", "")
+            portfolio_value = float(pv_raw) if pv_raw else None
+            notes_raw = row.get("notes", "")
+            notes = notes_raw.strip('"') or None
+
+            # track earliest row that carries net_worth + net_worth_delta
+            try:
+                nw = float(row["net_worth"])
+                nw_delta = float(row["net_worth_delta"])
+                key = year * 100 + month
+                if earliest is None or key < earliest[0]:
+                    earliest = (key, nw, nw_delta)
+            except (KeyError, ValueError):
+                pass
+
+            existing = await MonthEntry.find_one(
+                MonthEntry.year == year, MonthEntry.month == month
+            )
+
+            if existing:
+                if on_conflict == "skip":
+                    skipped += 1
+                    continue
+                await existing.set({
+                    "income": income,
+                    "expenses": expenses,
+                    "investments": investments,
+                    "portfolio_value": portfolio_value,
+                    "notes": notes,
+                })
+                updated += 1
+            else:
+                await MonthEntry(
+                    year=year, month=month, income=income,
+                    expenses=expenses, investments=investments,
+                    portfolio_value=portfolio_value, notes=notes,
+                ).insert()
+                imported += 1
+
+        except Exception as exc:
+            errors.append(f"row {i}: {exc}")
+
+    derived = round(earliest[1] - earliest[2], 2) if earliest else None
+    return ImportResult(
+        imported=imported, updated=updated, skipped=skipped,
+        errors=errors, derived_initial_net_worth=derived,
+    )

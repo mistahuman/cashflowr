@@ -3,7 +3,6 @@
 	import type { MonthEntry } from '$lib/api/client';
 	import HistoryTable from '$lib/components/cashflowr/HistoryTable.svelte';
 	import { resolve } from '$app/paths';
-	import { monthName } from '$lib/utils/format';
 
 	let { data }: { data: PageData } = $props();
 
@@ -17,11 +16,11 @@
 
 		const rows = [...months].reverse().map((m) => [
 			m.year,
-			monthName(m.month),
+			m.month,
 			m.income,
 			m.expenses,
 			m.investments,
-			m.portfolio_value_effective,
+			m.portfolio_value ?? '',
 			m.savings,
 			m.liquid_balance,
 			m.net_worth,
